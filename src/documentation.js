@@ -142,13 +142,28 @@ module.exports = function() {
     },
 
     getFunctionDocumentationParts: function getFunctionDocumentationParts() {
-      const httpEvents = this._getHttpEvents();
-      Object.keys(httpEvents).forEach(funcNameAndPath => {
-        const httpEvent = httpEvents[funcNameAndPath];
+      const nativeEvents = this._getHttpEvents();
+      const customEvents = this._getCustomEvents();
+      const events = Object.keys(nativeEvents)
+        .map(k => nativeEvents[k])
+        .concat(Object.keys(customEvents).map(k => customEvents[k]));
+
+      events.forEach(httpEvent => {
         const path = httpEvent.path;
         const method = httpEvent.method.toUpperCase();
         this.createDocumentationParts(functionDocumentationParts, httpEvent, { path, method });
       });
+    },
+
+    _getCustomEvents: function _getCustomEvents() {
+      return Object.keys(
+        this.customVars.documentation.functions
+      ).reduce((documentationObj, functionName) => {
+        const func = this.customVars.documentation.functions[functionName];
+        let key = functionName + func.method + func.path;
+        documentationObj[key] = func;
+        return documentationObj;
+      }, {});
     },
 
     _getHttpEvents: function _getHttpEvents() {
